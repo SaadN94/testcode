@@ -1,0 +1,18 @@
+# Logg inn på Azure-kontoen din
+Connect-AzAccount
+
+# Opprett variabler for management groups
+$managementGroups = @("Contoso", "Platform", "LandingZones", "Decomissioned", "Sandbox", "Identity", "Management", "Connectivity", "SAP", "Corp", "Online")
+
+# Opprett security groups og tildele roller for hver management group
+foreach ($mg in $managementGroups) {
+    # Opprett security groups
+    $readerGroup = New-AzADGroup -DisplayName "MG-$mg-Reader" -MailNickname "MG-$mg-Reader"
+    $contributorGroup = New-AzADGroup -DisplayName "MG-$mg-Contributor" -MailNickname "MG-$mg-Contributor"
+
+    # Tildel Reader-rollen med aktiv tilgang
+    New-AzPIMAssignment -ResourceGroupName $mg -ResourceName $mg -ResourceType ManagementGroup -RoleDefinitionName "Reader" -AssigneeObjectId $readerGroup.Id -AssignmentState Active
+
+    # Tildel Contributor-rollen som eligible
+    New-AzPIMAssignment -ResourceGroupName $mg -ResourceName $mg -ResourceType ManagementGroup -RoleDefinitionName "Contributor" -AssigneeObjectId $contributorGroup.Id -AssignmentState Eligible
+}
